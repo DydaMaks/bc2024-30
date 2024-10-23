@@ -17,28 +17,29 @@ if (!fs.existsSync(options.input)) {
   process.exit(1);
 }
 
-// Читання даних з JSON
-fs.readFile(options.input, 'utf8', (err, data) => {
-  if (err) {
-    console.error("Помилка при читанні файлу:", err);
-    process.exit(1);
-  }
+// Читання даних з JSON синхронно
+try {
+  const data = fs.readFileSync(options.input, 'utf8');
+  const jsonData = JSON.parse(data);
 
-  const result = JSON.parse(data);
+  // Фільтрація даних, де значення parent === "BS3_BanksLiab"
+  const filteredData = jsonData.filter(item => item.parent === 'BS3_BanksLiab');
 
-  // Якщо задано параметр --display, виводимо в консоль
+  // Форматування результату
+  const result = filteredData.map(item => `${item.indicator}: ${item.value}`).join('\n');
+
+  // Якщо задано параметр --display, виводимо результат у консоль
   if (options.display) {
     console.log(result);
   }
 
   // Якщо задано параметр --output, записуємо результат у файл
   if (options.output) {
-    fs.writeFile(options.output, JSON.stringify(result, null, 2), (err) => {
-      if (err) {
-        console.error("Помилка при записі файлу:", err);
-        process.exit(1);
-      }
-      console.log(`Результат записано у файл ${options.output}`);
-    });
+    fs.writeFileSync(options.output, result, 'utf8');
+    console.log(`Результат записано у файл ${options.output}`);
   }
-});
+
+} catch (err) {
+  console.error("Помилка при обробці файлу:", err.message);
+  process.exit(1);
+}
